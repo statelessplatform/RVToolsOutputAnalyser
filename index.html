@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RVTools Analyser</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">RV</div>
+        <div class="brand-name">RVTools Analyser</div>
+      </div>
+      <nav class="nav">
+        <div class="nav-section">GENERAL</div>
+        <button class="nav-item nav-item-active" data-view="dashboard">📊 Dashboard</button>
+        <button class="nav-item nav-locked"      data-view="clusters">🖥️ Clusters</button>
+        <button class="nav-item nav-locked"      data-view="hosts">🗄️ Hosts</button>
+        <button class="nav-item nav-locked"      data-view="vms">💾 VMs</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="team-card">
+          <div class="team-avatar">IT</div>
+          <div class="team-info">
+            <div class="team-name">VMware Estate</div>
+            <div class="team-plan">Upload up to 10 exports</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main ── -->
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 id="page-title">Dashboard</h1>
+          <div id="file-badges" class="file-badges"></div>
+        </div>
+            <div class="topbar-right">
+            <button id="btn-export-pdf" class="btn ghost hidden">📄 Export PDF</button>
+            <button id="btn-clear" class="btn ghost">✕ Clear</button>
+            <label class="file-input-label">
+                <input id="file-input" type="file" multiple accept=".csv,.xlsx,.xls" />
+                <span>📂 Select files</span>
+            </label>
+            <button id="btn-analyse" class="btn primary">Analyse →</button>
+            </div>
+      </header>
+
+      <!-- Drop zone -->
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-icon">📤</div>
+        <div class="drop-title">Drop RVTools exports here</div>
+        <div class="drop-sub">Supports .xlsx and .csv · Up to 10 files · Processed entirely in your browser</div>
+      </div>
+
+      <!-- ══ VIEW: DASHBOARD ══ -->
+      <div id="view-dashboard" class="view hidden">
+
+        <section class="kpi-row">
+          <div class="kpi-card" style="--kpi-color:#818cf8">
+            <div class="kpi-label">Active VMs</div>
+            <div class="kpi-value" id="kpi-active-vms">–</div>
+            <div class="kpi-sub"  id="kpi-total-vms">0 total</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:#34d399">
+            <div class="kpi-label">ESXi Hosts</div>
+            <div class="kpi-value" id="kpi-hosts">–</div>
+            <div class="kpi-sub">physical servers</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:#f472b6">
+            <div class="kpi-label">Total vCPUs</div>
+            <div class="kpi-value" id="kpi-vcpus">–</div>
+            <div class="kpi-sub"  id="kpi-cores">0 physical cores</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:#60a5fa">
+            <div class="kpi-label">Physical RAM</div>
+            <div class="kpi-value" id="kpi-pram">–</div>
+            <div class="kpi-sub">host total</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:#a78bfa">
+            <div class="kpi-label">vRAM Allocated</div>
+            <div class="kpi-value" id="kpi-vram">–</div>
+            <div class="kpi-sub">active VMs</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:#fb923c">
+            <div class="kpi-label">Provisioned Storage</div>
+            <div class="kpi-value" id="kpi-storage-prov">–</div>
+            <div class="kpi-sub"  id="kpi-storage-cap">0 TiB capacity</div>
+          </div>
+        </section>
+
+        <section class="grid-two">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Infrastructure Overcommit</div></div>
+            <div class="metric-grid">
+              <div class="metric-card">
+                <div class="metric-label">Core : vCPU</div>
+                <div class="metric-value" id="ratio-core-vcpu">–</div>
+                <div class="metric-sub">vCPU per physical core</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">vRAM : pRAM</div>
+                <div class="metric-value" id="ratio-vram-pram">–</div>
+                <div class="metric-sub">memory overcommit</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">VM Density</div>
+                <div class="metric-value" id="ratio-vm-density">–</div>
+                <div class="metric-sub">VMs per ESXi host</div>
+              </div>
+            </div>
+            <div class="panel-header" style="margin-top:18px">
+              <div class="panel-title">VM Powerstate</div>
+            </div>
+            <table class="table" id="table-power">
+              <thead><tr><th>State</th><th>Count</th><th>%</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Top 10 Heavy Hitters (vCPU)</div></div>
+            <table class="table" id="table-top10">
+              <thead>
+                <tr>
+                  <th>VM Name</th><th>vCPU</th><th>vRAM (GiB)</th>
+                  <th>Prov. (GiB)</th><th>Cluster</th><th>Power</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="grid-two">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">OS Distribution</div></div>
+            <table class="table" id="table-os">
+              <thead><tr><th>OS</th><th>VMs</th><th>%</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">HW Version Distribution</div></div>
+            <table class="table" id="table-hw">
+              <thead><tr><th>HW Version</th><th>VMs</th><th>%</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- ══ VIEW: CLUSTERS ══ -->
+      <div id="view-clusters" class="view hidden">
+        <section class="panel">
+          <div class="panel-header"><div class="panel-title">Cluster Inventory</div></div>
+          <table class="table" id="table-clusters-full">
+            <thead>
+              <tr>
+                <th>Cluster</th><th>VMs</th><th>vCPUs</th>
+                <th>vRAM (GiB)</th><th>pCores</th>
+                <th>vCPU/Core Ratio</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- ══ VIEW: HOSTS ══ -->
+      <div id="view-hosts" class="view hidden">
+        <section class="panel">
+          <div class="panel-header"><div class="panel-title">ESXi Host Inventory</div></div>
+          <table class="table" id="table-hosts-full">
+            <thead>
+              <tr>
+                <th>Host</th><th>Cluster</th><th>Sockets</th><th>Cores</th>
+                <th>RAM (GiB)</th><th>vCPUs Placed</th><th>VMs</th><th>ESXi Version</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- ══ VIEW: VMs ══ -->
+        <div id="view-vms" class="view hidden">
+        <div class="vm-toolbar">
+            <div class="vm-search-wrap">
+            <svg class="vm-search-icon" viewBox="0 0 20 20" fill="none">
+                <circle cx="8.5" cy="8.5" r="5.5" stroke="#9ca3af" stroke-width="1.6"/>
+                <path d="M13 13l3.5 3.5" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <input id="vm-search" type="search" class="vm-search-input"
+                    placeholder="Search VM name, cluster, OS, host…" />
+            </div>
+            <div class="vm-select-wrap">
+            <svg class="vm-select-icon" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="3" fill="#9ca3af"/>
+                <circle cx="10" cy="4"  r="1.5" fill="#9ca3af"/>
+                <circle cx="10" cy="16" r="1.5" fill="#9ca3af"/>
+            </svg>
+            <select id="vm-filter-power" class="vm-select-input">
+                <option value="">All Powerstates</option>
+                <option value="poweredon">Powered On</option>
+                <option value="poweredoff">Powered Off</option>
+                <option value="suspended">Suspended</option>
+            </select>
+            <svg class="vm-select-chevron" viewBox="0 0 20 20" fill="none">
+                <path d="M5 7.5l5 5 5-5" stroke="#6b7280" stroke-width="1.6"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            </div>
+        </div>
+
+        <section class="panel" style="margin-bottom:0">
+            <div class="panel-header">
+            <div class="panel-title">VM Inventory</div>
+            <div id="vm-count-label" class="vm-count-badge"></div>
+            </div>
+            <div style="overflow-x:auto;max-height:600px;overflow-y:auto">
+            <table class="table sticky-head" id="table-vms-full">
+                <thead>
+                <tr>
+                    <th>VM Name</th><th>Power</th><th>vCPU</th><th>vRAM (GiB)</th>
+                    <th>Prov. (GiB)</th><th>Cluster</th><th>Host</th>
+                    <th>OS</th><th>HW Ver</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            </div>
+        </section>
+        </div>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
