@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RVTools Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='16' y='22' text-anchor='middle' font-size='16' font-weight='bold' fill='white' font-family='sans-serif'>RV</text></svg>">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">RV</div>
+      <span class="brand-name">RVTools Dash</span>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Core</div>
+      <button class="nav-item nav-item-active" data-view="dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item nav-locked" data-view="clusters" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+        Clusters
+      </button>
+      <button class="nav-item nav-locked" data-view="hosts" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="4" rx="1"/><rect x="2" y="10" width="20" height="4" rx="1"/><rect x="2" y="17" width="20" height="4" rx="1"/></svg>
+        ESXi Hosts
+      </button>
+      <button class="nav-item nav-locked" data-view="vms" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 2v4M16 2v4M2 10h20"/></svg>
+        VM Inventory
+      </button>
+
+      <div class="nav-section">Analytics</div>
+      <button class="nav-item nav-locked" data-view="globalview" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Global View
+      </button>
+      <button class="nav-item nav-locked" data-view="statistics" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Statistics
+      </button>
+      <button class="nav-item nav-locked" data-view="storage" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
+        Storage
+      </button>
+
+      <div class="nav-section">Compliance</div>
+      <button class="nav-item nav-locked" data-view="support" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        End of Support
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="team-card">
+        <div class="team-avatar">RV</div>
+        <div class="team-info">
+          <div class="team-name">RVTools Dash</div>
+          <div class="team-plan">Stateless · Browser Only</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="page-title">Dashboard</h1>
+        <div class="file-badges" id="file-badges"></div>
+      </div>
+      <div class="topbar-right">
+        <label class="file-input-label">
+          ＋ Load Files
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" multiple />
+        </label>
+        <button class="btn ghost" id="btn-reset" style="display:none">↺ Reset</button>
+        <button class="btn ghost" id="btn-export-pdf" style="display:none">⬇ Export PDF</button>
+      </div>
+    </div>
+
+    <!-- Drop Zone -->
+    <div id="drop-zone" class="drop-zone">
+      <div class="drop-icon">📂</div>
+      <div class="drop-title">Drop RVTools exports here</div>
+      <div class="drop-sub">Supports .xlsx and .csv · Up to 10 files · Processed entirely in your browser</div>
+    </div>
+
+    <!-- ── VIEW: Dashboard ── -->
+    <section id="view-dashboard" class="hidden">
+      <div class="kpi-row">
+        <div class="kpi-card" style="--kpi-color:#6366f1">
+          <div class="kpi-label">Active VMs</div>
+          <div class="kpi-value" id="kpi-active-vms">0</div>
+          <div class="kpi-sub" id="kpi-total-vms">0 total</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#10b981">
+          <div class="kpi-label">ESXi Hosts</div>
+          <div class="kpi-value" id="kpi-hosts">0</div>
+          <div class="kpi-sub">physical servers</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#f59e0b">
+          <div class="kpi-label">Total vCPUs</div>
+          <div class="kpi-value" id="kpi-vcpus">0</div>
+          <div class="kpi-sub" id="kpi-pcores">0 physical cores</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#3b82f6">
+          <div class="kpi-label">Physical RAM</div>
+          <div class="kpi-value" id="kpi-pram">0</div>
+          <div class="kpi-sub">host total</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#8b5cf6">
+          <div class="kpi-label">vRAM Allocated</div>
+          <div class="kpi-value" id="kpi-vram">0</div>
+          <div class="kpi-sub">active VMs</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#ec4899">
+          <div class="kpi-label">Provisioned Storage</div>
+          <div class="kpi-value" id="kpi-storage">0</div>
+          <div class="kpi-sub" id="kpi-ds-cap">0 TiB capacity</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Infrastructure Overcommit</span></div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-label">Core : vCPU</div>
+            <div class="metric-value" id="ratio-core-vcpu">—</div>
+            <div class="metric-sub">vCPU per physical core</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">vRAM : pRAM</div>
+            <div class="metric-value" id="ratio-vram-pram">—</div>
+            <div class="metric-sub">memory overcommit</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">VM Density</div>
+            <div class="metric-value" id="ratio-vm-density">—</div>
+            <div class="metric-sub">VMs per ESXi host</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-two">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">VM Powerstate</span></div>
+          <div class="table-wrap"><table class="table" id="tbl-power"><thead><tr><th>State</th><th>Count</th><th>%</th></tr></thead><tbody></tbody></table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Top 10 Heavy Hitters (vCPU)</span></div>
+          <div class="table-wrap"><table class="table" id="tbl-top10"><thead><tr><th>VM Name</th><th>vCPU</th><th>vRAM (GiB)</th><th>Prov. (GiB)</th><th>Cluster</th><th>Power</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="grid-two">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">OS Distribution</span></div>
+          <div class="table-wrap"><table class="table" id="tbl-os"><thead><tr><th>OS</th><th>VMs</th><th>%</th></tr></thead><tbody></tbody></table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">HW Version Distribution</span></div>
+          <div class="table-wrap"><table class="table" id="tbl-hw"><thead><tr><th>HW Version</th><th>VMs</th><th>%</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Cluster Inventory</span></div>
+        <div class="table-wrap"><table class="table" id="tbl-clusters"><thead><tr><th>Cluster</th><th>VMs</th><th>vCPUs</th><th>vRAM (GiB)</th><th>pCores</th><th>vCPU/Core Ratio</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ESXi Host Inventory <small style="font-weight:400;color:var(--text-muted);margin-left:8px">— click row for details</small></span></div>
+        <div class="table-wrap"><table class="table" id="tbl-hosts"><thead><tr><th>Host</th><th>Cluster</th><th>Sockets</th><th>Cores</th><th>RAM (GiB)</th><th>vCPUs Placed</th><th>VMs</th><th>ESXi Version</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: Clusters ── -->
+    <section id="view-clusters" class="hidden">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Cluster Summary</span></div>
+        <div class="table-wrap"><table class="table" id="tbl-clusters-full"><thead><tr><th>Cluster</th><th>VMs</th><th>vCPUs</th><th>vRAM (GiB)</th><th>pCores</th><th>vCPU/Core</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: Hosts ── -->
+    <section id="view-hosts" class="hidden">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ESXi Host Inventory <small style="font-weight:400;color:var(--text-muted);margin-left:8px">— click row for details</small></span></div>
+        <div class="table-wrap"><table class="table" id="tbl-hosts-full"><thead><tr><th>Host</th><th>Cluster</th><th>Sockets</th><th>Cores</th><th>RAM (GiB)</th><th>vCPUs Placed</th><th>VMs</th><th>ESXi Version</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: VMs ── -->
+    <section id="view-vms" class="hidden">
+      <div class="vm-toolbar">
+        <div class="vm-search-wrap">
+          <svg class="vm-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="vm-search" class="vm-search-input" placeholder="Search VMs, OS, cluster…" />
+        </div>
+        <div class="vm-select-wrap">
+          <svg class="vm-select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          <select id="vm-power-filter" class="vm-select-input">
+            <option value="">All Power States</option>
+            <option value="poweredon">Powered On</option>
+            <option value="poweredoff">Powered Off</option>
+            <option value="suspended">Suspended</option>
+          </select>
+          <svg class="vm-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <span class="vm-count-badge" id="vm-count-badge">0 VMs</span>
+      </div>
+      <div class="panel">
+        <div class="table-wrap"><table class="table" id="tbl-vms"><thead><tr><th>VM Name</th><th>Power</th><th>vCPU</th><th>vRAM (GiB)</th><th>Prov. (GiB)</th><th>Cluster</th><th>Host</th><th>OS</th><th>HW Ver</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: Global View ── -->
+    <section id="view-globalview" class="hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Multi-Cluster Overview</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <label class="toggle-label"><input type="checkbox" id="gv-show-graphs" checked> Show Charts</label>
+            <label class="toggle-label"><input type="checkbox" id="gv-show-os" checked> Show OS</label>
+          </div>
+        </div>
+        <div id="gv-summary-bar" class="gv-summary-bar"></div>
+        <div id="gv-cluster-cards" class="gv-cluster-grid"></div>
+      </div>
+      <div class="grid-two" id="gv-charts-row">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">ESX Count by Cluster</span></div>
+          <canvas id="chart-gv-esx" height="220"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">VM Count by Cluster</span></div>
+          <canvas id="chart-gv-vm" height="220"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: Statistics ── -->
+    <section id="view-statistics" class="hidden">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ESXi Host Size Distribution</span></div>
+        <div class="stat-legend">
+          <span>Very Large: VMs &gt; 40</span>
+          <span>Large: VMs 21–40</span>
+          <span>Medium: VMs 11–20</span>
+          <span>Small: VMs ≤ 10</span>
+        </div>
+        <div class="table-wrap" style="max-width:500px;margin-bottom:16px;">
+          <table class="table" id="tbl-esx-dist">
+            <thead><tr><th>Category</th><th>ESX</th><th>VMs ON</th><th>VMs OFF</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+        <div class="grid-two">
+        <div class="panel">
+            <div class="panel-header"><span class="panel-title">ESX Distribution</span></div>
+            <div style="position:relative;height:260px;">
+            <canvas id="chart-stat-esx"></canvas>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header"><span class="panel-title">VM Distribution (ON vs OFF)</span></div>
+            <div style="position:relative;height:260px;">
+            <canvas id="chart-stat-vm"></canvas>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- ── VIEW: Storage ── -->
+    <section id="view-storage" class="hidden">
+      <div class="storage-tabs">
+        <button class="storage-tab storage-tab-active" data-stab="cluster">Cluster View</button>
+        <button class="storage-tab" data-stab="esx">ESX View</button>
+        <button class="storage-tab" data-stab="vm">VM View</button>
+      </div>
+      <div class="grid-two">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title" id="storage-table-title">Cluster Storage</span></div>
+          <div class="table-wrap">
+            <table class="table" id="tbl-storage-main">
+              <thead><tr id="storage-thead-row"></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="storage-summary-box" id="storage-summary-box"></div>
+        </div>
+            <div class="panel">
+            <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <span class="panel-title">Storage Distribution</span>
+                <select id="storage-chart-metric" class="vm-select-input" style="min-width:140px;padding:4px 10px;font-size:13px;">
+                <option value="size">Disk Size (GiB)</option>
+                <option value="count">Disk Count</option>
+                <option value="vms">VM Count</option>
+                </select>
+            </div>
+            <div style="position:relative;height:320px;">
+                <canvas id="chart-storage"></canvas>
+            </div>
+            </div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: End of Support ── -->
+    <section id="view-support" class="hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">OS End of Support Status</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:12px;color:var(--text-muted)">EOL Mode:</span>
+            <select id="support-mode" class="vm-select-input" style="min-width:130px;padding:5px 10px;">
+              <option value="standard">Standard</option>
+              <option value="extended">Extended Support</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="tbl-support">
+            <thead><tr>
+              <th>OS</th><th>Version</th><th>End of Support</th>
+              <th>Asset Count</th>
+              <th class="col-ok">✓ OK</th>
+              <th class="col-tbu">⚠ To Upgrade</th>
+              <th class="col-ns">✗ Not Supported</th>
+              <th class="col-na">— N/A</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;">
+        <div class="panel" style="margin:0"><div class="panel-header"><span class="panel-title">Total Assets</span></div><canvas id="chart-support-total" height="180"></canvas></div>
+        <div class="panel" style="margin:0"><div class="panel-header"><span class="panel-title">Linux</span></div><canvas id="chart-support-linux" height="180"></canvas></div>
+        <div class="panel" style="margin:0"><div class="panel-header"><span class="panel-title">Windows</span></div><canvas id="chart-support-windows" height="180"></canvas></div>
+        <div class="panel" style="margin:0"><div class="panel-header"><span class="panel-title">ESXi</span></div><canvas id="chart-support-esx" height="180"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: Forecast ── -->
+    <section id="view-forecast" class="hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">End of Support Forecast</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:12px;color:var(--text-muted)">Increment:</span>
+            <select id="forecast-increment" class="vm-select-input" style="min-width:120px;padding:5px 10px;">
+              <option value="6">6 Months</option>
+              <option value="3">3 Months</option>
+              <option value="12">12 Months</option>
+            </select>
+            <label class="toggle-label"><input type="checkbox" id="forecast-pct"> Values in %</label>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="tbl-forecast">
+            <thead><tr><th>OS</th><th>Version</th><th>EoS Date</th><th>Count</th><th class="col-ok">Today</th><th class="col-tbu">+1 Period</th><th class="col-tbu">+2 Periods</th><th class="col-ns">+3 Periods</th><th class="col-na">N/A</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="grid-two">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Asset Forecast Detail</span></div>
+          <div class="table-wrap" style="max-height:320px;overflow-y:auto;">
+            <table class="table" id="tbl-forecast-assets">
+              <thead><tr><th>#</th><th>VM / Host</th><th>OS</th><th>Today</th><th>+1</th><th>+2</th><th>+3</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">OS Forecast Timeline</span></div>
+          <canvas id="chart-forecast-line" height="280"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: DRP ── -->
+    <section id="view-drp" class="hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Disaster Recovery Plan Simulation</span>
+          <div style="display:flex;gap:8px;">
+            <button class="drp-scenario-btn drp-scenario-active" data-scenario="1">Scenario 1</button>
+            <button class="drp-scenario-btn" data-scenario="2">Scenario 2</button>
+            <button class="drp-scenario-btn" data-scenario="3">Scenario 3</button>
+          </div>
+        </div>
+        <div class="table-wrap" style="margin-bottom:16px;">
+          <table class="table" id="tbl-drp-main">
+            <thead><tr><th>#</th><th>Recovery Cluster</th><th>ESX</th><th>VM ON Before</th><th>Real Cores</th><th>Total vCPU Before</th><th>Eff. Mem (GB)</th><th>vRAM Before</th><th class="col-drp-after">VM ON After</th><th class="col-drp-after">vCPU After</th><th class="col-drp-after">vRAM After</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="tbl-drp-ratios">
+            <thead><tr><th>#</th><th>Recovery Cluster</th><th>Avg vCPU Slot</th><th>Avg vRAM Slot</th><th>Avail. Slots</th><th>DRP Ratio vCPU/Cores</th><th>Applied vCPU</th><th>DRP Ratio vRAM/Mem</th><th>Applied vRAM</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Protected Clusters → Recovery Mapping</span></div>
+        <div class="table-wrap">
+          <table class="table" id="tbl-drp-protected">
+            <thead><tr><th>#</th><th>Protected Cluster</th><th>Location</th><th>ESX Count</th><th>Sel. VM ON</th><th>vCPU</th><th>vRAM (GB)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MODALS — must be inside <main> but BEFORE </main>
+         ══════════════════════════════════════════════════════════ -->
+
+    <!-- ESX Details Modal -->
+    <div id="modal-esx" class="modal-overlay hidden">
+      <div class="modal-content modal-lg">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modal-esx-title">ESX Details</h2>
+          <button class="modal-close" id="modal-esx-close">✕</button>
+        </div>
+        <div id="modal-esx-body" class="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- VM Details Modal -->
+    <div id="modal-vm" class="modal-overlay hidden">
+      <div class="modal-content modal-lg">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modal-vm-title">VM Details</h2>
+          <button class="modal-close" id="modal-vm-close">✕</button>
+        </div>
+        <div id="modal-vm-body" class="modal-body"></div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- end .app-shell -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     ALL SCRIPTS AT VERY BOTTOM — after all HTML is parsed
+     ══════════════════════════════════════════════════════════════ -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js"></script>
+<script src="dashboards/dashboard-globalview.js"></script>
+<script src="dashboards/dashboard-statistics.js"></script>
+<script src="dashboards/dashboard-storage.js"></script>
+<script src="dashboards/dashboard-support.js"></script>
+<script src="dashboards/dashboard-forecast.js"></script>
+<script src="dashboards/dashboard-drp.js"></script>
+<script src="dashboards/modal-manager.js"></script>
+<script src="dashboards/pdf-export.js"></script>
+</body>
+</html>
