@@ -125,19 +125,42 @@
     renderPie('chart-support-esx',     [esxTot.ok,esxTot.tbu,esxTot.ns,esxTot.na]);
   }
 
-  function renderPie(canvasId, [ok,tbu,ns,na]) {
+  function renderPie(canvasId, [ok, tbu, ns, na]) {
     if (_charts[canvasId]) { _charts[canvasId].destroy(); }
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
     _charts[canvasId] = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['OK','To Upgrade','Not Supported','N/A'],
-        datasets: [{ data:[ok,tbu,ns,na], backgroundColor:['#22c55e','#f59e0b','#ef4444','#94a3b8'], borderWidth:2, borderColor:'#fff' }]
+        labels: ['OK', 'To Upgrade', 'Not Supported', 'N/A'],
+        datasets: [{
+          data: [ok, tbu, ns, na],
+          backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#94a3b8'],
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
       },
-      options: { responsive:true, plugins:{ legend:{ position:'bottom', labels:{ font:{ size:10 } } } } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { right: 8 } },
+        plugins: {
+          legend: {
+            position: 'right',
+            align: 'center',
+            labels: {
+              font: { size: 11 },
+              boxWidth: 12,
+              boxHeight: 12,
+              padding: 10,
+              color: '#374151'
+            }
+          }
+        }
+      }
     });
   }
+
 
   function normalizeOSKey(os) {
     if (!os) return 'Unknown';
