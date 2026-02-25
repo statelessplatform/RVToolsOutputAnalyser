@@ -71,7 +71,11 @@ window.openESXModal = function(host) {
   var vmsOnHost = allVMs.filter(function(v) { return v.host === host.host_name; });
   var vmOnCount  = vmsOnHost.filter(function(v) { return v.powerstate.toLowerCase() === 'poweredon'; }).length;
   var vmOffCount = vmsOnHost.length - vmOnCount;
-  var totalVRAM  = vmsOnHost.reduce(function(s,v){ return s + (v.memory_gib||0); }, 0).toFixed(0);
+  var totalVRAM = vmsOnHost.reduce(function (s, v) {
+  var mem = parseFloat(v.memory_gib);
+  if (isNaN(mem)) mem = 0;
+  return s + mem;
+}, 0).toFixed(0);
   var vcpuPerCore = host.total_cores ? (host.vcpus_placed / host.total_cores).toFixed(2) : '—';
 
   var vmRows = vmsOnHost.map(function(v, i) {
@@ -85,7 +89,7 @@ window.openESXModal = function(host) {
   bodyEl.innerHTML =
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px">'
       +'<div>'
-        +'<div class="panel-title" style="margin-bottom:10px;color:var(--accent)">Host Details</div>'
+        +'<div class="panel-title" style="margin-bottom:10px;color:#0072a3">Host Details</div>'
         +'<table class="table"><tbody>'
           +'<tr><td style="color:var(--text-muted);width:140px">Host Name</td><td><strong>'+host.host_name+'</strong></td></tr>'
           +'<tr><td style="color:var(--text-muted)">Cluster</td><td>'+host.cluster+'</td></tr>'
@@ -98,7 +102,7 @@ window.openESXModal = function(host) {
         +'</tbody></table>'
       +'</div>'
       +'<div>'
-        +'<div class="panel-title" style="margin-bottom:10px;color:var(--accent)">Utilisation</div>'
+        +'<div class="panel-title" style="margin-bottom:10px;color:#0072a3">Utilisation</div>'
         +'<div class="metric-grid" style="grid-template-columns:repeat(2,1fr)">'
           +'<div class="metric-card"><div class="metric-label">VM ON</div><div class="metric-value" style="color:#22c55e">'+vmOnCount+'</div></div>'
           +'<div class="metric-card"><div class="metric-label">VM OFF</div><div class="metric-value" style="color:#ef4444">'+vmOffCount+'</div></div>'
@@ -146,7 +150,7 @@ window.openVMModal = function(vm) {
   bodyEl.innerHTML =
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px">'
       +'<div>'
-        +'<div class="panel-title" style="margin-bottom:10px;color:var(--accent)">VM Details</div>'
+        +'<div class="panel-title" style="margin-bottom:10px;color:#0072a3">VM Details</div>'
         +'<table class="table"><tbody>'
           +'<tr><td style="color:var(--text-muted);width:130px">VM Name</td><td><strong>'+vm.vm_name+'</strong></td></tr>'
           +'<tr><td style="color:var(--text-muted)">Power</td><td><span class="badge '+bc+'">'+bl+'</span></td></tr>'
@@ -160,7 +164,7 @@ window.openVMModal = function(vm) {
         +'</tbody></table>'
       +'</div>'
       +'<div>'
-        +'<div class="panel-title" style="margin-bottom:10px;color:var(--accent)">Resources</div>'
+        +'<div class="panel-title" style="margin-bottom:10px;color:#0072a3">Resources</div>'
         +'<div class="metric-grid" style="grid-template-columns:repeat(2,1fr)">'
           +'<div class="metric-card"><div class="metric-label">vCPUs</div><div class="metric-value">'+vm.cpus+'</div></div>'
           +'<div class="metric-card"><div class="metric-label">vRAM</div><div class="metric-value">'+vm.memory_gib+' <small>GiB</small></div></div>'
