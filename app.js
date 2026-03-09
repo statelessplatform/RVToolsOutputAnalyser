@@ -703,6 +703,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  if (dropZone && fileInput) {
+    dropZone.addEventListener('click', function() {
+        fileInput.click();
+    });
+  }
+
   if (fileInput) {
     fileInput.addEventListener('change', function() {
       handleFiles(fileInput.files);
